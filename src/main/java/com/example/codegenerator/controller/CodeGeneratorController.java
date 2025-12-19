@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -31,23 +30,33 @@ public class CodeGeneratorController {
     }
 
     @PostMapping("/generate/{tableName}")
-    public String generateCode(@PathVariable String tableName, @RequestParam String schema) throws SQLException, IOException {
-        List<TableMetadata> tables = service.getTableMetadata(schema);
-        for (TableMetadata table : tables) {
-            if (table.getTableName().equals(tableName)) {
-                generator.generateCode(table);
-                return "Code generated for table: " + tableName;
-            }
-        }
-        return "Table not found";
+    public String generateCode(@PathVariable String tableName, @RequestParam String schema) throws SQLException {
+        return service.getTableMetadata(schema, tableName)
+                .map(table -> {
+                    try {
+                        generator.generateCode(table);
+                        return "Code generated for table: " + tableName;
+                    } catch (IOException e) {
+                        return "Failed to generate code for table: " + tableName;
+                    }
+                })
+                .orElse("Table not found");
     }
 
     // 新增：获取表数据的API
     @GetMapping("/{tableName}")
-    public List<Map<String, Object>> getTableData(@PathVariable String tableName) {
+    public List<Map<String, Object>> getTableData(
+            @PathVariable String tableName,
+            @RequestParam(defaultValue = "PUBLIC") String schema
+    ) {
         try {
-            // 使用双引号包围表名以处理H2保留字
-            String sql = "SELECT * FROM \"" + tableName.toUpperCase() + "\"";
+            TableMetadata table = service.getTableMetadata(schema, tableName).orElse(null);
+            if (table == null) {
+                return List.of();
+            }
+            // 使用双引号包围表名以处理H2保留字，同时仅允许metadata中存在的表名
+            String safeTableName = table.getTableName().replace("\"", "\"\"");
+            String sql = "SELECT * FROM \"" + safeTableName + "\"";
             List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
             System.out.println("Query result for table " + tableName + ": " + result.size() + " rows");
             return result;

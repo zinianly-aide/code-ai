@@ -4,15 +4,17 @@ import com.example.codegenerator.model.ColumnMetadata;
 import com.example.codegenerator.model.TableMetadata;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Component
 public class CodeGenerator {
 
-    private static final String BASE_PATH = "/workspaces/code-ai/generated/";
+    private static final Path BASE_PATH = Paths.get("generated");
 
     public void generateCode(TableMetadata table) throws IOException {
         generateEntity(table);
@@ -50,7 +52,7 @@ public class CodeGenerator {
 
         sb.append("}\n");
 
-        writeToFile(BASE_PATH + "entity/" + className + ".java", sb.toString());
+        writeToFile(BASE_PATH.resolve("entity").resolve(className + ".java"), sb.toString());
     }
 
     private void generateMapperXml(TableMetadata table) throws IOException {
@@ -83,7 +85,7 @@ public class CodeGenerator {
 
         sb.append("</mapper>\n");
 
-        writeToFile(BASE_PATH + "mapper/" + className + "Mapper.xml", sb.toString());
+        writeToFile(BASE_PATH.resolve("mapper").resolve(className + "Mapper.xml"), sb.toString());
     }
 
     private void generateMapperInterface(TableMetadata table) throws IOException {
@@ -102,7 +104,7 @@ public class CodeGenerator {
         sb.append(");\n\n");
         sb.append("}\n");
 
-        writeToFile(BASE_PATH + "mapper/" + className + "Mapper.java", sb.toString());
+        writeToFile(BASE_PATH.resolve("mapper").resolve(className + "Mapper.java"), sb.toString());
     }
 
     private void generateService(TableMetadata table) throws IOException {
@@ -136,7 +138,7 @@ public class CodeGenerator {
         sb.append("    }\n\n");
         sb.append("}\n");
 
-        writeToFile(BASE_PATH + "service/" + className + "Service.java", sb.toString());
+        writeToFile(BASE_PATH.resolve("service").resolve(className + "Service.java"), sb.toString());
     }
 
     private void generateController(TableMetadata table) throws IOException {
@@ -164,7 +166,7 @@ public class CodeGenerator {
         sb.append("    }\n\n");
         sb.append("}\n");
 
-        writeToFile(BASE_PATH + "controller/" + className + "Controller.java", sb.toString());
+        writeToFile(BASE_PATH.resolve("controller").resolve(className + "Controller.java"), sb.toString());
     }
 
     private void generateReactSchema(TableMetadata table) throws IOException {
@@ -182,7 +184,7 @@ public class CodeGenerator {
         sb.append("];\n\n");
         sb.append("export { columns };\n");
 
-        writeToFile(BASE_PATH + "react/" + className + "Schema.js", sb.toString());
+        writeToFile(BASE_PATH.resolve("react").resolve(className + "Schema.js"), sb.toString());
     }
 
     private String toCamelCase(String str, boolean capitalizeFirst) {
@@ -199,11 +201,8 @@ public class CodeGenerator {
         return sb.toString();
     }
 
-    private void writeToFile(String path, String content) throws IOException {
-        File file = new File(path);
-        file.getParentFile().mkdirs();
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write(content);
-        }
+    private void writeToFile(Path path, String content) throws IOException {
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, content, StandardCharsets.UTF_8);
     }
 }
