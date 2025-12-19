@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.entity.User">
+        <result column="ID" property="id"/>
+        <result column="USERNAME" property="username"/>
+        <result column="EMAIL" property="email"/>
+        <result column="PASSWORD" property="password"/>
+        <result column="FULL_NAME" property="fullName"/>
+        <result column="AGE" property="age"/>
+        <result column="CREATED_AT" property="createdAt"/>
+        <result column="UPDATED_AT" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select ID, USERNAME, EMAIL, PASSWORD, FULL_NAME, AGE, CREATED_AT, UPDATED_AT from user
+        where ID = #{id}
+    </select>
+
+</mapper>
